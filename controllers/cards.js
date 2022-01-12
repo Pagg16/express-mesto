@@ -30,9 +30,20 @@ module.exports.delCard = (req, res) => {
 
   cardSchems
     .findByIdAndDelete(cardId)
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
     .then((card) => res.status(200).send(card))
-    .catch(() => {
-      res.status(400).send({ message: 'Произошла ошибка' });
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Переданы некорректные данные' });
+      } else if (err.message === 'NotFound') {
+        res
+          .status(404)
+          .send({ message: 'Карточка с указанным _id не найдена' });
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка' });
+      }
     });
 };
 
@@ -43,13 +54,14 @@ module.exports.likeCard = (req, res) => {
       { $addToSet: { likes: req.user._id } },
       { new: true },
     )
-    .then((card) => {
-      res.status(200).json(card);
+    .orFail(() => {
+      throw new Error('NotFound');
     })
+    .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
         res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else if (err.message === 'NotFound') {
+      } else if (err.message === 'NotFounдаd') {
         res
           .status(404)
           .send({ message: 'Передан несуществующий _id карточки' });
@@ -66,9 +78,10 @@ module.exports.dislikeCard = (req, res) => {
       { $pull: { likes: req.user._id } },
       { new: true },
     )
-    .then((card) => {
-      res.status(200).json(card);
+    .orFail(() => {
+      throw new Error('NotFound');
     })
+    .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
         res.status(400).send({ message: 'Переданы некорректные данные' });

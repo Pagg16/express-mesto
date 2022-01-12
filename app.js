@@ -6,6 +6,8 @@ const { PORT = 3000 } = process.env;
 
 // mongodb+srv://Pagg16:Pagg16@cluster0.edkvs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
 
+// mongodb://localhost:27017/mestodb
+
 const DB_URL = 'mongodb://localhost:27017/mestodb';
 
 const app = express();
@@ -24,10 +26,10 @@ app.use(router);
 
 async function startApp() {
   try {
+    app.listen(PORT, () => console.log(`Сервер запущен на порту + ${PORT}`));
     await mongoose.connect(DB_URL, () => {
       console.log('Подключение к базе данных прошло успешно');
     });
-    app.listen(PORT, () => console.log(`Сервер запущен на порту + ${PORT}`));
   } catch (err) {
     console.log(err);
   }

@@ -18,21 +18,30 @@ module.exports.createUser = (req, res) => {
     });
 };
 
-module.exports.allUsers = async (req, res) => {
+module.exports.allUsers = (req, res) => {
   userSchems
     .find()
     .then((users) => res.status(200).send(users))
     .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 };
 
-module.exports.oneUser = async (req, res) => {
+module.exports.oneUser = (req, res) => {
   userSchems
     .findById(req.params.userid)
-    .then((user) => {
-      res.status(200).send(user);
+    .orFail(() => {
+      throw new Error('NotFound');
     })
-    .catch(() => {
-      res.status(500).json({ message: 'Запрашиваемый пользователь не найден' });
+    .then((user) => res.status(200).send(user))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Переданы некорректные данные' });
+      } else if (err.message === 'NotFound') {
+        res
+          .status(404)
+          .send({ message: 'Пользователь по указанному _id не найден' });
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка' });
+      }
     });
 };
 
@@ -40,10 +49,17 @@ module.exports.updateUser = (req, res) => {
   const { name, about } = req.body;
 
   userSchems
-    .findByIdAndUpdate(req.body._id, { name, about }, { new: true })
+    .findByIdAndUpdate(
+      req.user._id,
+      { name, about },
+      { new: true, runValidators: true },
+    )
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
     .then((user) => res.status(200).send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         res.status(400).send({
           message: 'Переданы некорректные данные при обновлении профиля',
         });
@@ -62,17 +78,21 @@ module.exports.updateUserAvatar = (req, res) => {
 
   userSchems
     .findByIdAndUpdate(
-      req.body._id,
+      req.user._id,
       { avatar },
       {
         new: true,
+        runValidators: true,
       },
     )
-    .find((updateUserAvatar) => res.send(200).json(updateUserAvatar))
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         res.status(400).send({
-          message: 'Переданы некорректные данные при обновлении профиля',
+          message: 'Переданы некорректные данные при обновлении аватара',
         });
       } else if (err.message === 'NotFound') {
         res
