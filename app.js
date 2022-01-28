@@ -1,6 +1,10 @@
+const { errors } = require('celebrate');
 const express = require('express');
 const mongoose = require('mongoose');
 const router = require('./routes/router');
+const singinSingup = require('./routes/singinSingup');
+const auth = require('./middlewares/auth');
+const errorHandler = require('./middlewares/error-handler');
 
 const { PORT = 3000 } = process.env;
 
@@ -8,26 +12,28 @@ const { PORT = 3000 } = process.env;
 
 // mongodb://localhost:27017/mestodb
 
-const DB_URL = 'mongodb://localhost:27017/mestodb';
+const DB_URL = 'mongodb+srv://Pagg16:Pagg16@cluster0.edkvs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority';
 
 const app = express();
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '61d968ca294fc3000745a4e4',
-  };
+app.use(singinSingup);
 
-  next();
+app.use(auth, router);
+
+app.use((req, res) => {
+  res.status(404).json('данные отсутствуют по указанному роуту');
 });
 
-app.use(router);
+app.use(errors());
 
-async function startApp() {
+app.use(errorHandler);
+
+function startApp() {
   try {
     app.listen(PORT, () => console.log(`Сервер запущен на порту + ${PORT}`));
-    await mongoose.connect(DB_URL, () => {
+    mongoose.connect(DB_URL, () => {
       console.log('Подключение к базе данных прошло успешно');
     });
   } catch (err) {
