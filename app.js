@@ -5,6 +5,7 @@ const router = require('./routes/router');
 const singinSingup = require('./routes/singinSingup');
 const auth = require('./middlewares/auth');
 const errorHandler = require('./middlewares/error-handler');
+const NotFound = require('./errors/not-found');
 
 const { PORT = 3000 } = process.env;
 
@@ -22,8 +23,8 @@ app.use(singinSingup);
 
 app.use(auth, router);
 
-app.use((req, res) => {
-  res.status(404).json('данные отсутствуют по указанному роуту');
+app.use((req, res, next) => {
+  next(new NotFound('данные отсутствуют по указанному роуту'));
 });
 
 app.use(errors());

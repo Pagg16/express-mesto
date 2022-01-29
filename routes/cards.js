@@ -1,3 +1,4 @@
+const validator = require('validator');
 const { celebrate, Joi } = require('celebrate');
 const { Router } = require('express');
 const { createCard } = require('../controllers/cards');
@@ -9,45 +10,34 @@ const { dislikeCard } = require('../controllers/cards');
 const cardsRouter = new Router();
 
 cardsRouter.post('/', celebrate({
-  headers: Joi.object().keys({
-    authorization: Joi.string(),
-  }).unknown(true),
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required(),
+    link: Joi.string().required().custom((value) => {
+      if (!validator.isURL(value, { require_protocol: true })) {
+        throw new Error('Неправильный формат ссылки');
+      }
+      return value;
+    }),
   }),
 }), createCard);
 
-cardsRouter.get('/', celebrate({
-  headers: Joi.object().keys({
-    authorization: Joi.string(),
-  }).unknown(true),
-}), allCards);
+cardsRouter.get('/', allCards);
 
 cardsRouter.delete('/:cardId', celebrate({
-  headers: Joi.object().keys({
-    authorization: Joi.string(),
-  }).unknown(true),
   params: Joi.object().keys({
-    cardId: Joi.string().required().alphanum().length(24),
+    cardId: Joi.string().length(24).hex().required(),
   }),
 }), delCard);
 
 cardsRouter.put('/:cardId/likes', celebrate({
-  headers: Joi.object().keys({
-    authorization: Joi.string(),
-  }).unknown(true),
   params: Joi.object().keys({
-    cardId: Joi.string().required().alphanum().length(24),
+    cardId: Joi.string().length(24).hex().required(),
   }),
 }), likeCard);
 
 cardsRouter.delete('/:cardId/likes', celebrate({
-  headers: Joi.object().keys({
-    authorization: Joi.string(),
-  }).unknown(true),
   params: Joi.object().keys({
-    cardId: Joi.string().required().alphanum().length(24),
+    cardId: Joi.string().length(24).hex().required(),
   }),
 }), dislikeCard);
 

@@ -16,21 +16,19 @@ module.exports.createUser = (req, res, next) => {
   } = req.body;
   bcrypt
     .hash(password, 10)
-    .then((hash) => {
-      userSchems.create({
-        name,
-        about,
-        avatar,
-        email,
-        password: hash,
-      }).then((user) => {
+    .then((hash) => userSchems.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    })
+      .then((user) => {
         const userNoPassword = JSON.parse(JSON.stringify(user));
-
         delete userNoPassword.password;
-
         res.status(200).send({ userNoPassword });
-      });
-    }).catch((err) => {
+      }))
+    .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(`${Object.values(err.errors).map((error) => error.message).join(', ')}`));
       } else if (err.code === 11000) {
@@ -61,7 +59,7 @@ module.exports.currentUser = (req, res, next) => {
       } else if (err.message === 'NotFound') {
         next(new NotFound('Пользователь по указанному _id не найден'));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -81,7 +79,7 @@ module.exports.oneUser = (req, res, next) => {
       } else if (err.message === 'NotFound') {
         next(new NotFound('Пользователь по указанному _id не найден'));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -105,7 +103,7 @@ module.exports.updateUser = (req, res, next) => {
       } else if (err.message === 'NotFound') {
         next(new NotFound('Пользователь с указанным _id не найден'));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -132,7 +130,7 @@ module.exports.updateUserAvatar = (req, res, next) => {
       } else if (err.message === 'NotFound') {
         next(new NotFound('Пользователь с указанным _id не найден'));
       } else {
-        next();
+        next(err);
       }
     });
 };

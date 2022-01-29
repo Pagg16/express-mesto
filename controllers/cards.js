@@ -1,6 +1,7 @@
 const cardSchems = require('../models/card');
 const BadRequestError = require('../errors/bad-request-error');
 const NotFound = require('../errors/not-found');
+const ForbiddenError = require('../errors/not-found');
 
 module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
@@ -11,7 +12,7 @@ module.exports.createCard = (req, res, next) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при создании карточки'));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -28,7 +29,7 @@ module.exports.delCard = async (req, res, next) => {
 
   try {
     await cardSchems
-      .find({ cardId })
+      .findById(cardId)
       .then((card) => {
         const owner = JSON.stringify(card[0].owner);
 
@@ -39,19 +40,15 @@ module.exports.delCard = async (req, res, next) => {
 
     await cardSchems
       .findByIdAndDelete(cardId)
-      .orFail(() => {
-        throw new Error('NotFound');
-      })
+      .orFail(() => new NotFound('Карточка с указанным id не найдена'))
       .then((card) => res.status(200).send(card));
   } catch (err) {
     if (err.message === 'CastError') {
       next(new BadRequestError('Переданы некорректные данные'));
-    } else if (err.message === 'NotFound') {
-      next(new NotFound('Карточка с указанным id не найдена'));
     } else if (err.message === 'NotYoursError') {
-      next(new NotFound('Карточка с указанным _id не принадлежит вам'));
+      next(new ForbiddenError('Карточка с указанным _id не принадлежит вам'));
     } else {
-      next();
+      next(err);
     }
   }
 };
@@ -73,7 +70,7 @@ module.exports.likeCard = (req, res, next) => {
       } else if (err.message === 'NotFound') {
         next(new NotFound('Переданы некорректные данные для постановки лайка'));
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -95,7 +92,7 @@ module.exports.dislikeCard = (req, res, next) => {
       } else if (err.message === 'NotFound') {
         next(new NotFound('Переданы некорректные данные для снятия лайка'));
       } else {
-        next();
+        next(err);
       }
     });
 };
