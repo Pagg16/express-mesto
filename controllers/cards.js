@@ -27,29 +27,28 @@ module.exports.allCards = (req, res, next) => {
 module.exports.delCard = async (req, res, next) => {
   const { cardId } = req.params;
 
-  try {
-    const card = await cardSchems
-      .findById(cardId)
-      .orFail(() => new NotFound('Карточка с указанным id не найдена'))
-      .then((cardToDel) => {
-        const owner = String(cardToDel.owner);
+  cardSchems
+    .findById(cardId)
+    .orFail(() => new NotFound('Карточка с указанным id не найдена'))
+    .then((cardToDel) => {
+      const owner = String(cardToDel.owner);
 
-        const uderId = String(req.user._id);
+      const uderId = String(req.user._id);
 
-        if (owner !== uderId) {
-          throw new ForbiddenError('Карточка с указанным _id не принадлежит вам');
-        }
-      });
+      if (owner !== uderId) {
+        throw new ForbiddenError('Карточка с указанным _id не принадлежит вам');
+      }
 
-    await card.remove()
-      .then((delCard) => res.status(200).send(delCard));
-  } catch (err) {
-    if (err.message === 'CastError') {
-      next(new BadRequestError('Переданы некорректные данные'));
-    } else {
-      next(err);
-    }
-  }
+      cardToDel.remove();
+      res.status(200).send(cardToDel);
+    })
+    .catch((err) => {
+      if (err.message === 'CastError') {
+        next(new BadRequestError('Переданы некорректные данные'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 module.exports.likeCard = (req, res, next) => {

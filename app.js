@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { errors } = require('celebrate');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -7,11 +8,10 @@ const auth = require('./middlewares/auth');
 const errorHandler = require('./middlewares/error-handler');
 const NotFound = require('./errors/not-found');
 
-const { PORT = 3000 } = process.env;
-
-const { DB_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
-
-// mongodb+srv://Pagg16:Pagg16@cluster0.edkvs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
+const {
+  PORT = 3000,
+  DB_URL = 'mongodb://localhost:27017/mestodb',
+} = process.env;
 
 const app = express();
 
@@ -33,7 +33,7 @@ function startApp() {
   try {
     app.listen(PORT, () => console.log(`Сервер запущен на порту + ${PORT}`));
     mongoose.connect(DB_URL, () => {
-      console.log('Подключение к базе данных прошло успешно');
+      console.log(`Подключение к базе данных прошло успешно по адресу ${DB_URL}`);
     });
   } catch (err) {
     console.log(err);
