@@ -9,11 +9,9 @@ const NotFound = require('./errors/not-found');
 
 const { PORT = 3000 } = process.env;
 
+const { DB_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
+
 // mongodb+srv://Pagg16:Pagg16@cluster0.edkvs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
-
-// mongodb://localhost:27017/mestodb
-
-const DB_URL = 'mongodb+srv://Pagg16:Pagg16@cluster0.edkvs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority';
 
 const app = express();
 

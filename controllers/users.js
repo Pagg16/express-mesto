@@ -49,15 +49,11 @@ module.exports.allUsers = (req, res, next) => {
 module.exports.currentUser = (req, res, next) => {
   userSchems
     .findById(req.user._id)
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
+    .orFail(() => new NotFound('Пользователь по указанному _id не найден'))
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные'));
-      } else if (err.message === 'NotFound') {
-        next(new NotFound('Пользователь по указанному _id не найден'));
       } else {
         next(err);
       }
@@ -69,15 +65,11 @@ module.exports.oneUser = (req, res, next) => {
 
   userSchems
     .findById(userid)
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
+    .orFail(() => new NotFound('Пользователь по указанному _id не найден'))
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные'));
-      } else if (err.message === 'NotFound') {
-        next(new NotFound('Пользователь по указанному _id не найден'));
       } else {
         next(err);
       }
@@ -93,15 +85,11 @@ module.exports.updateUser = (req, res, next) => {
       { name, about },
       { new: true, runValidators: true },
     )
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
+    .orFail(() => new NotFound('Пользователь по указанному _id не найден'))
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные при обновлении профиля'));
-      } else if (err.message === 'NotFound') {
-        next(new NotFound('Пользователь с указанным _id не найден'));
       } else {
         next(err);
       }
@@ -120,15 +108,11 @@ module.exports.updateUserAvatar = (req, res, next) => {
         runValidators: true,
       },
     )
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
+    .orFail(() => new NotFound('Пользователь по указанному _id не найден'))
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные при обновлении аватара'));
-      } else if (err.message === 'NotFound') {
-        next(new NotFound('Пользователь с указанным _id не найден'));
       } else {
         next(err);
       }

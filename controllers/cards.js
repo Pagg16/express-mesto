@@ -1,7 +1,7 @@
 const cardSchems = require('../models/card');
 const BadRequestError = require('../errors/bad-request-error');
 const NotFound = require('../errors/not-found');
-const ForbiddenError = require('../errors/not-found');
+const ForbiddenError = require('../errors/forbidden-error');
 
 module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
@@ -28,25 +28,24 @@ module.exports.delCard = async (req, res, next) => {
   const { cardId } = req.params;
 
   try {
-    await cardSchems
+    const card = await cardSchems
       .findById(cardId)
-      .then((card) => {
-        const owner = JSON.stringify(card[0].owner);
+      .orFail(() => new NotFound('Карточка с указанным id не найдена'))
+      .then((cardToDel) => {
+        const owner = String(cardToDel.owner);
 
-        if (owner !== `"${req.user._id}"`) {
-          throw new Error('NotYoursError');
+        const uderId = String(req.user._id);
+
+        if (owner !== uderId) {
+          throw new ForbiddenError('Карточка с указанным _id не принадлежит вам');
         }
       });
 
-    await cardSchems
-      .findByIdAndDelete(cardId)
-      .orFail(() => new NotFound('Карточка с указанным id не найдена'))
-      .then((card) => res.status(200).send(card));
+    await card.remove()
+      .then((delCard) => res.status(200).send(delCard));
   } catch (err) {
     if (err.message === 'CastError') {
       next(new BadRequestError('Переданы некорректные данные'));
-    } else if (err.message === 'NotYoursError') {
-      next(new ForbiddenError('Карточка с указанным _id не принадлежит вам'));
     } else {
       next(err);
     }
@@ -60,15 +59,11 @@ module.exports.likeCard = (req, res, next) => {
       { $addToSet: { likes: req.user._id } },
       { new: true },
     )
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
+    .orFail(() => new NotFound('Пользователь с указанным id не существует'))
     .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные'));
-      } else if (err.message === 'NotFound') {
-        next(new NotFound('Переданы некорректные данные для постановки лайка'));
       } else {
         next(err);
       }
@@ -82,15 +77,11 @@ module.exports.dislikeCard = (req, res, next) => {
       { $pull: { likes: req.user._id } },
       { new: true },
     )
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
+    .orFail(() => () => new NotFound('Пользователь с указанным id не существует'))
     .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Переданы некорректные данные'));
-      } else if (err.message === 'NotFound') {
-        next(new NotFound('Переданы некорректные данные для снятия лайка'));
       } else {
         next(err);
       }
